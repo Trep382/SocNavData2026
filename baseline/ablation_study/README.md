@@ -34,7 +34,7 @@ where:
 
 - `--models_path` specifies the directory containing the trained models.
 - `--context` specifies the context file used for evaluation.
--  --dataset specifies the file containing the test set (txt).
+- `--dataset` specifies the file containing the test set (txt).
 - `--dataroot` specifies the root directory of the dataset.
 - `--trainconfig_path` specifies the directory containing the ablation configuration files.
 

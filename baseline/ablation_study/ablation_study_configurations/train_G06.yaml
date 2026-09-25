@@ -30,5 +30,5 @@ Q_TEST_PATH: 'qualitative_tests'
 Q_TEST_FILE: 'qualitative_tests/socnavgym_conf_qualitative_one_static.yaml' 
 
 # Distances Group
-SAVE_NAME: 'ablation_G05'
+SAVE_NAME: 'ablation_G06'
 FEATURES_TO_REMOVE: ['dist_nearest_hum', 'dist_nearest_obj', 'dist_wall', 'global_dist_nearest_hum']

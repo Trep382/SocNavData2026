@@ -30,5 +30,5 @@ Q_TEST_PATH: 'qualitative_tests'
 Q_TEST_FILE: 'qualitative_tests/socnavgym_conf_qualitative_one_static.yaml' 
 
 # Path evolution Group
-SAVE_NAME: 'ablation_G10'
+SAVE_NAME: 'ablation_G05'
 FEATURES_TO_REMOVE: ['path_efficiency_ratio', 'step_ratio', 'episode_end']

@@ -30,5 +30,5 @@ Q_TEST_PATH: 'qualitative_tests'
 Q_TEST_FILE: 'qualitative_tests/socnavgym_conf_qualitative_one_static.yaml' 
 
 # Intrusions Group
-SAVE_NAME: 'ablation_G07'
+SAVE_NAME: 'ablation_G08'
 FEATURES_TO_REMOVE: ['social_space_intrusionA',  'social_space_intrusionB', 'social_space_intrusionC']

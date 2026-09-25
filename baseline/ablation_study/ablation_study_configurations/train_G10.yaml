@@ -30,5 +30,5 @@ Q_TEST_PATH: 'qualitative_tests'
 Q_TEST_FILE: 'qualitative_tests/socnavgym_conf_qualitative_one_static.yaml' 
 
 # Potential danger Group
-SAVE_NAME: 'ablation_G09'
+SAVE_NAME: 'ablation_G10'
 FEATURES_TO_REMOVE: ['min_time_to_collision', 'min_time_to_collision2', 'max_fear', 'max_panic']

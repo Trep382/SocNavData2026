@@ -30,5 +30,5 @@ Q_TEST_PATH: 'qualitative_tests'
 Q_TEST_FILE: 'qualitative_tests/socnavgym_conf_qualitative_one_static.yaml' 
 
 # Near humans Group
-SAVE_NAME: 'ablation_G08'
+SAVE_NAME: 'ablation_G09'
 FEATURES_TO_REMOVE: ['num_near_humansA', 'num_near_humansB', 'num_near_humansC', 'num_near_humansA2', 'num_near_humansB2', 'num_near_humansC2']

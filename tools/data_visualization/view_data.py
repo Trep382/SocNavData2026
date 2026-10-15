@@ -32,6 +32,9 @@ import argparse
 HUMAN_RADIUS = 0.55 / 2.
 HUMAN_DEPTH =  0.20 / 2.
 
+data = None
+last_press = None
+
 def world_to_grid(pW, GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT):
     pGx, pGy = world_to_grid_float(pW, GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT)
     return (int(pGx), int(pGy))
@@ -44,8 +47,26 @@ def world_to_grid_float(pW, GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_
     pGx = rx/GRID_CELL_SIZEX 
     pGy = GRID_HEIGHT - ry/GRID_CELL_SIZEY 
     # pGy = ry/GRID_CELL_SIZEY 
-
     return pGx, pGy
+
+
+
+def grid_to_world_float(pG, GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT):
+    # Undo scaling and the y-flip
+    rx = pG[0] * GRID_CELL_SIZEX
+    ry = (GRID_HEIGHT - pG[1]) * GRID_CELL_SIZEY
+    # Undo the rotation (rotate by +angle)
+    c, s = np.cos(GRID_ANGLE_ORIG), np.sin(GRID_ANGLE_ORIG)
+    tx = rx * c - ry * s
+    ty = rx * s + ry * c
+    # Undo the translation
+    return tx + GRID_X_ORIG, ty + GRID_Y_ORIG
+
+def grid_to_world(pG, GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT, center=True):
+    # Integer cell (i, j) covers [i, i+1) x [j, j+1) in float grid coords
+    off = 0.5 if center else 0.0
+    return grid_to_world_float((pG[0] + off, pG[1] + off),
+                               GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT)
 
 def rad_to_degrees(rad):
     deg = rad*180/np.pi
@@ -314,6 +335,7 @@ def draw_scenario(data, imageW, imageH, FR = None):
     global_grid = cv2.resize(global_grid, (GRID_HEIGHT, GRID_WIDTH))
 
     # DRAW WALLS
+    print(data["walls"])
     for w in data["walls"]:
         p1 = (w[0], w[1])
         p2 = (w[2], w[3])
@@ -344,6 +366,33 @@ def draw_frame(s, local_grid, human_colors, GRID_CELL_SIZEX, GRID_CELL_SIZEY, GR
     return local_grid, human_colors
 
 
+
+def click_coordinates(event, x, y, flags, param):
+    global data
+    global last_press
+    global global_grid
+    global args
+    global GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT
+    if event == cv2.EVENT_LBUTTONDOWN:
+        last_press = grid_to_world([x, y], GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT, center=True)
+        last_press = [float(last_press[0]), float(last_press[1])]
+    elif event == cv2.EVENT_LBUTTONUP:
+        last_release = grid_to_world([x, y], GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT, center=True)
+        last_release = [float(last_release[0]), float(last_release[1])]
+        wall_endpoints = [last_press[0], last_press[1], last_release[0], last_release[1]]
+        print("WALL", wall_endpoints)
+        data['walls'].append(wall_endpoints)
+        global_grid, GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT = draw_scenario(data, args.videowidth, args.videoheight)
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        press = grid_to_world([x, y], GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT, center=True)
+        press = [float(last_press[0]), float(last_press[1])]
+        print("COORDINATE:", press)
+
+
+
+cv2.namedWindow('grid')
+cv2.setMouseCallback('grid', click_coordinates)
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
@@ -372,7 +421,6 @@ if __name__ == "__main__":
 
 
     for file_name in args.files:
-
         data = json.load(open(file_name, 'r'))
         global_grid, GRID_CELL_SIZEX, GRID_CELL_SIZEY, GRID_X_ORIG, GRID_Y_ORIG, GRID_ANGLE_ORIG, GRID_HEIGHT = draw_scenario(data, args.videowidth, args.videoheight)
 
@@ -409,6 +457,8 @@ if __name__ == "__main__":
         images_for_video = []
         last_timestamp = -1
         human_colors = {}
+
+
         for s in data["sequence"]:
             local_grid = copy.deepcopy(global_grid)
 
@@ -426,8 +476,19 @@ if __name__ == "__main__":
                 images_for_video.append(to_show)
             cv2.imshow("grid", to_show)
             k = cv2.waitKey(1)
+            # Press escape to exit
             if k==27:
                 exit()
+            # Press 'w' to write "output"
+            elif k == ord("w"):
+                with open("output.json", 'w') as fd:
+                    json.dump(data, fd)
+            # Press 'p' to pause
+            elif k == ord("p"):
+                k = -1
+                while k != ord("p"):
+                    cv2.imshow("grid", to_show)
+                    k = cv2.waitKey(1)
 
             sleeptime = s["timestamp"]-last_timestamp
             if last_timestamp == -1:
